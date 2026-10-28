@@ -5,6 +5,7 @@ from PIL import Image
 from io import BytesIO
 
 s3_client = boto3.client('s3')
+sqs_client = boto3.client('sqs')  # add this line
 
 # Thumbnail sizes to generate
 THUMBNAIL_SIZES = {
@@ -76,6 +77,20 @@ def lambda_handler(event, context):
             
             thumbnails_created.append(thumbnail_key)
             print(f"Created thumbnail: {thumbnail_key}")
+
+
+        # ADD THIS BLOCK — publish completion message to SQS
+        sqs_client.send_message(
+            QueueUrl=os.environ['SQS_QUEUE_URL'],
+            MessageBody=json.dumps({
+                'bucket': bucket,
+                'original_key': key,
+                'thumbnail_keys': {
+                    size: key.replace('/original/', f'/thumbnails/{size}/')
+                    for size in THUMBNAIL_SIZES
+                }
+            })
+        )
         
         return {
             'statusCode': 200,
