@@ -77,10 +77,7 @@ def lambda_handler(event, context):
             
             thumbnails_created.append(thumbnail_key)
             print(f"Created thumbnail: {thumbnail_key}")
-
-
-        # ADD THIS BLOCK — publish completion message to SQS
-        sqs_client.send_message(
+            sqs_client.send_message(
             QueueUrl=os.environ['SQS_QUEUE_URL'],
             MessageBody=json.dumps({
                 'bucket': bucket,
@@ -91,6 +88,8 @@ def lambda_handler(event, context):
                 }
             })
         )
+
+        
         
         return {
             'statusCode': 200,
